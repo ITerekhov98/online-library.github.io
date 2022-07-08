@@ -4,7 +4,8 @@ from pathlib import Path
 from urllib.parse import urlparse, urljoin
 
 import requests
-from requests import HTTPError
+from requests import HTTPError, ConnectionError
+from retry import retry
 from pathvalidate import sanitize_filename
 from bs4 import BeautifulSoup
 
@@ -12,9 +13,6 @@ from bs4 import BeautifulSoup
 BOOKS_DIR = 'books'
 IMAGES_DIR = 'images'
 BOOKS_INFO_DIR = 'books_info'
-Path(BOOKS_DIR).mkdir(parents=True, exist_ok=True)
-Path(IMAGES_DIR).mkdir(parents=True, exist_ok=True)
-Path(BOOKS_INFO_DIR).mkdir(parents=True, exist_ok=True)
 
 
 def check_for_redirect(response):
@@ -22,6 +20,7 @@ def check_for_redirect(response):
         raise HTTPError
 
 
+@retry(ConnectionError, delay=1, backoff=2, max_delay=128)
 def download_book(book_id, book_name, folder=BOOKS_DIR):
     url = 'https://tululu.org/txt.php'
     params = {
@@ -38,6 +37,7 @@ def download_book(book_id, book_name, folder=BOOKS_DIR):
     return file_path
 
 
+@retry(ConnectionError, delay=1, backoff=2, max_delay=128)
 def download_image(book_url, folder=IMAGES_DIR):
     url = urljoin('https://tululu.org/', book_url)
     response = requests.get(url)
@@ -61,6 +61,7 @@ def save_extra_info(book_id, book_details, folder=BOOKS_INFO_DIR):
                 file.write(f'{description}: {data}\r\n')
 
 
+@retry(ConnectionError, delay=1, backoff=2, max_delay=128)
 def get_book_details(book_id):
     url = f'https://tululu.org/b{book_id}/'
     response = requests.get(url)
@@ -89,6 +90,9 @@ def get_book_details(book_id):
 
 
 def main():
+    Path(BOOKS_DIR).mkdir(parents=True, exist_ok=True)
+    Path(IMAGES_DIR).mkdir(parents=True, exist_ok=True)
+    Path(BOOKS_INFO_DIR).mkdir(parents=True, exist_ok=True)
     parser = argparse.ArgumentParser(
         description='Загрузка книг из онлайн-библиотеки tululu.org'
     )
