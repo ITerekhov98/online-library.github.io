@@ -1,5 +1,0 @@
-title: Административные рынки СССР и России
-author: Кордонский Симон
-image_url: /images/nopic.gif
-genres: ['Деловая литература']
-comments:

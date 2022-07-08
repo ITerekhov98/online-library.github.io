@@ -38,12 +38,11 @@ def download_book(book_id, book_name, folder=BOOKS_DIR):
 
 
 @retry(ConnectionError, delay=1, backoff=2, max_delay=128)
-def download_image(book_url, folder=IMAGES_DIR):
-    url = urljoin('https://tululu.org/', book_url)
-    response = requests.get(url)
+def download_image(image_url, folder=IMAGES_DIR):
+    response = requests.get(image_url)
     response.raise_for_status()
 
-    parced_url = urlparse(url)
+    parced_url = urlparse(image_url)
     image_name = parced_url.path.split('/')[-1]
     image_path = os.path.join(folder, image_name)
     with open(image_path, 'wb') as file:
@@ -67,14 +66,15 @@ def get_book_page(book_id):
     response = requests.get(url)
     response.raise_for_status()
     check_for_redirect(response)
-    return response.text
+    return url, response.text
 
 
-def parse_book_details(raw_html_page):
+def parse_book_details(url, raw_html_page):
     soup = BeautifulSoup(raw_html_page, 'lxml')
     cover_details = soup.find('div', id='content').find('h1')
     title, author = cover_details.text.split('::')
-    image_url = soup.find('div', class_='bookimage').find('img')['src']
+    image_urn = soup.find('div', class_='bookimage').find('img')['src']
+    image_url = urljoin(url, image_urn)
     raw_comments = soup.find_all('div', class_='texts')
     comments = [
         comment.find('span', class_='black').text for comment in raw_comments
@@ -113,8 +113,8 @@ def main():
 
     for book_id in range(args.start_id, args.end_id + 1):
         try:
-            raw_html_page = get_book_page(book_id)
-            book_details = parse_book_details(raw_html_page)
+            page_url, raw_html_page = get_book_page(book_id)
+            book_details = parse_book_details(page_url, raw_html_page)
             download_book(book_id, book_details['title'])
             download_image(book_details['image_url'])
             save_extra_info(book_id, book_details)
