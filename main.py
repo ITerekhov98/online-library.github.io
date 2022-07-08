@@ -47,14 +47,14 @@ def get_book_details(book_id):
     image_url = soup.find('div', class_='bookimage').find('img')['src']
     raw_comments = soup.find_all('div', class_='texts')
     comments = [comment.find('span', class_='black').text for comment in raw_comments]
-    # comments = []
-    # for comment in raw_comments:
-    #     comments.append(comment.find('span', class_='black'))
+    raw_genres = soup.find('span', class_='d_book').find_all('a')
+    genres = [genre.text for genre in raw_genres]
     book_details = {
         'title': title.strip(),
         'author': author.strip(),
         'image_url': image_url,
-        'comments': comments
+        'comments': comments,
+        'genres': genres
     }
     return book_details
 
@@ -68,6 +68,7 @@ for index in range(1, 11):
         book_details = get_book_details(index)
         book_name = f"{index}. {book_details['title']}" 
         print(book_details['comments'])
+        print(book_details['genres'])
         # download_image(book_details['image_url'])
         # download_book(book_url, book_name)
     except HTTPError:
