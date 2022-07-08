@@ -1,15 +1,17 @@
-from pathlib import Path
+import argparse
 import os
+from pathlib import Path
+from urllib.parse import urlparse, urljoin
+
 import requests
 from requests import HTTPError
 from pathvalidate import sanitize_filename
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse, urljoin
-import argparse
+
 
 BOOKS_DIR = 'books'
-Path(BOOKS_DIR).mkdir(parents=True, exist_ok=True)
 IMAGES_DIR = 'images'
+Path(BOOKS_DIR).mkdir(parents=True, exist_ok=True)
 Path(IMAGES_DIR).mkdir(parents=True, exist_ok=True)
 
 
@@ -19,7 +21,7 @@ def check_for_redirect(response):
 
 
 def download_book(book_id, book_name, folder=BOOKS_DIR):
-    url = f'https://tululu.org/txt.php'
+    url = 'https://tululu.org/txt.php'
     params = {
         'id': book_id
     }
@@ -51,14 +53,18 @@ def get_book_details(book_id):
     response = requests.get(url)
     response.raise_for_status()
     check_for_redirect(response)
+
     soup = BeautifulSoup(response.text, 'lxml')
-    book_details = soup.find('div', id='content').find('h1')
-    title, author = book_details.text.split('::')
+    cover_details = soup.find('div', id='content').find('h1')
+    title, author = cover_details.text.split('::')
     image_url = soup.find('div', class_='bookimage').find('img')['src']
     raw_comments = soup.find_all('div', class_='texts')
-    comments = [comment.find('span', class_='black').text for comment in raw_comments]
+    comments = [
+        comment.find('span', class_='black').text for comment in raw_comments
+    ]
     raw_genres = soup.find('span', class_='d_book').find_all('a')
     genres = [genre.text for genre in raw_genres]
+
     book_details = {
         'title': title.strip(),
         'author': author.strip(),
@@ -68,15 +74,24 @@ def get_book_details(book_id):
     }
     return book_details
 
+
 def main():
     parser = argparse.ArgumentParser(
-    description='Загрузка книг из онлайн-библиотеки tululu.org'
+        description='Загрузка книг из онлайн-библиотеки tululu.org'
     )
-    parser.add_argument('start_id', help='Укажите с какого id начинать загрузку', type=int)
-    parser.add_argument('end_id', help='Укажите на каком id закончить загрузку', type=int)    
+    parser.add_argument(
+        'start_id',
+        help='Укажите с какого id начинать загрузку',
+        type=int
+    )
+    parser.add_argument(
+        'end_id',
+        help='Укажите на каком id закончить загрузку',
+        type=int
+    )
     args = parser.parse_args()
 
-    for book_id in range(args.start_id, args.end_id + 1):  
+    for book_id in range(args.start_id, args.end_id + 1):
         try:
             book_details = get_book_details(book_id)
             download_book(book_id, book_details['title'])
@@ -87,4 +102,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
