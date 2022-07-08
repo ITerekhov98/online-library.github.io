@@ -62,13 +62,16 @@ def save_extra_info(book_id, book_details, folder=BOOKS_INFO_DIR):
 
 
 @retry(ConnectionError, delay=1, backoff=2, max_delay=128)
-def get_book_details(book_id):
+def get_book_page(book_id):
     url = f'https://tululu.org/b{book_id}/'
     response = requests.get(url)
     response.raise_for_status()
     check_for_redirect(response)
+    return response.text
 
-    soup = BeautifulSoup(response.text, 'lxml')
+
+def parse_book_details(raw_html_page):
+    soup = BeautifulSoup(raw_html_page, 'lxml')
     cover_details = soup.find('div', id='content').find('h1')
     title, author = cover_details.text.split('::')
     image_url = soup.find('div', class_='bookimage').find('img')['src']
@@ -110,7 +113,8 @@ def main():
 
     for book_id in range(args.start_id, args.end_id + 1):
         try:
-            book_details = get_book_details(book_id)
+            raw_html_page = get_book_page(book_id)
+            book_details = parse_book_details(raw_html_page)
             download_book(book_id, book_details['title'])
             download_image(book_details['image_url'])
             save_extra_info(book_id, book_details)
