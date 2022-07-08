@@ -5,7 +5,7 @@ from requests import HTTPError
 from pathvalidate import sanitize_filename
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urljoin
-
+import argparse
 
 BOOKS_DIR = 'books'
 Path(BOOKS_DIR).mkdir(parents=True, exist_ok=True)
@@ -13,12 +13,22 @@ IMAGES_DIR = 'images'
 Path(IMAGES_DIR).mkdir(parents=True, exist_ok=True)
 
 
-def download_book(url, file_name, folder=BOOKS_DIR):
-    file_name = f'{sanitize_filename(file_name)}.txt'
-    response = requests.get(url)
+def check_for_redirect(response):
+    if response.history:
+        raise HTTPError
+
+
+def download_book(book_id, book_name, folder=BOOKS_DIR):
+    url = f'https://tululu.org/txt.php'
+    params = {
+        'id': book_id
+    }
+    response = requests.get(url, params=params)
     response.raise_for_status()
     check_for_redirect(response)
-    file_path = os.path.join(folder, file_name)
+
+    book_name = f'{book_id}. {sanitize_filename(book_name)}.txt'
+    file_path = os.path.join(folder, book_name)
     with open(file_path, 'w') as file:
         file.write(response.text)
     return file_path
@@ -58,21 +68,23 @@ def get_book_details(book_id):
     }
     return book_details
 
-def check_for_redirect(response):
-    if response.history:
-        raise HTTPError
+def main():
+    parser = argparse.ArgumentParser(
+    description='Загрузка книг из онлайн-библиотеки tululu.org'
+    )
+    parser.add_argument('start_id', help='Укажите с какого id начинать загрузку', type=int)
+    parser.add_argument('end_id', help='Укажите на каком id закончить загрузку', type=int)    
+    args = parser.parse_args()
 
-for index in range(1, 11):
-    book_url = f'https://tululu.org/txt.php?id={index}'
-    try:
-        book_details = get_book_details(index)
-        book_name = f"{index}. {book_details['title']}" 
-        print(book_details['comments'])
-        print(book_details['genres'])
-        # download_image(book_details['image_url'])
-        # download_book(book_url, book_name)
-    except HTTPError:
-        print(f'{book_url} invalid')
-        continue
+    for book_id in range(args.start_id, args.end_id + 1):  
+        try:
+            book_details = get_book_details(book_id)
+            download_book(book_id, book_details['title'])
+            download_image(book_details['image_url'])
+        except HTTPError:
+            print(f'{book_id} invalid')
 
+
+if __name__ == '__main__':
+    main()
 
