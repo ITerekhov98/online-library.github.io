@@ -45,10 +45,16 @@ def get_book_details(book_id):
     book_details = soup.find('div', id='content').find('h1')
     title, author = book_details.text.split('::')
     image_url = soup.find('div', class_='bookimage').find('img')['src']
+    raw_comments = soup.find_all('div', class_='texts')
+    comments = [comment.find('span', class_='black').text for comment in raw_comments]
+    # comments = []
+    # for comment in raw_comments:
+    #     comments.append(comment.find('span', class_='black'))
     book_details = {
         'title': title.strip(),
         'author': author.strip(),
-        'image_url': image_url
+        'image_url': image_url,
+        'comments': comments
     }
     return book_details
 
@@ -61,7 +67,8 @@ for index in range(1, 11):
     try:
         book_details = get_book_details(index)
         book_name = f"{index}. {book_details['title']}" 
-        download_image(book_details['image_url'])
+        print(book_details['comments'])
+        # download_image(book_details['image_url'])
         # download_book(book_url, book_name)
     except HTTPError:
         print(f'{book_url} invalid')
