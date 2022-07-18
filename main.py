@@ -90,16 +90,12 @@ def get_book_page_by_url(url):
 
 def parse_book_details(url, raw_html_page):
     soup = BeautifulSoup(raw_html_page, 'lxml')
-    cover_details = soup.find('div', id='content').find('h1')
+    cover_details = soup.select_one('#content').select_one('h1')
     title, author = cover_details.text.split('::')
-    image_urn = soup.find('div', class_='bookimage').find('img')['src']
+    image_urn = soup.select_one('.bookimage img')['src']
     image_url = urljoin(url, image_urn)
-    raw_comments = soup.find_all('div', class_='texts')
-    comments = [
-        comment.find('span', class_='black').text for comment in raw_comments
-    ]
-    raw_genres = soup.find('span', class_='d_book').find_all('a')
-    genres = [genre.text for genre in raw_genres]
+    comments = [comment.text for comment in soup.select('.texts .black')]
+    genres = [genre.text for genre in soup.select('span.d_book a')]
 
     parsed_url = urlparse(url)
     book_id = parsed_url.path[2:-1]
