@@ -33,10 +33,10 @@ def get_books_urls_from_page(collection_url):
     return books_urls
 
 
-def get_books_urls_from_collection(loading_pages):
+def get_books_urls_from_collection(args):
     base_collection_url = 'https://tululu.org/l55/'
     books_urls = []
-    for page in range(loading_pages.start_page, loading_pages.end_page):
+    for page in range(args.start_page, args.end_page):
         collection_url = urljoin(base_collection_url, str(page))
         try:
             books_urls.extend(get_books_urls_from_page(collection_url))

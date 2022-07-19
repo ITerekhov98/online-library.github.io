@@ -15,10 +15,6 @@ from parse_tululu_category import get_books_urls_from_collection, check_for_redi
 
 BOOKS_DIR = 'books'
 IMAGES_DIR = 'images'
-BOOKS_INFO_DIR = 'books_info'
-
-
-
 
 
 @retry(ConnectionError, delay=1, backoff=2, max_delay=128)
@@ -57,17 +53,6 @@ def get_readable_book_info(book_details, book_path, image_src):
     book_details['image_src'] = image_src
     book_details['book_path'] = book_path
     return book_details
-
-
-def save_extra_info(book_id, book_details, folder=BOOKS_INFO_DIR):
-    file_path = os.path.join(folder, f'{book_id}.txt')
-    with open(file_path, 'w') as file:
-        for description, data in book_details.items():
-            if description == 'comments':
-                file.write('comments:\r\n')
-                [file.writelines(f'{comment}\r\n') for comment in data]
-            else:
-                file.write(f'{description}: {data}\r\n')
 
 
 @retry(ConnectionError, delay=1, backoff=2, max_delay=128)
@@ -112,8 +97,6 @@ def parse_book_details(url, raw_html_page):
 
 
 def main():
-    Path(BOOKS_DIR).mkdir(parents=True, exist_ok=True)
-    Path(IMAGES_DIR).mkdir(parents=True, exist_ok=True)
     parser = argparse.ArgumentParser(
         description='Загрузка книг из онлайн-библиотеки tululu.org'
     )
@@ -129,15 +112,46 @@ def main():
         type=int,
         default = float('inf'),
     )
-    loading_pages = parser.parse_args()
-    books_urls = get_books_urls_from_collection(loading_pages)
+    parser.add_argument(
+        '--dest_folder',
+        help='Каталог с результатами парсинга',
+        type=str,
+        default=os.getcwd(),
+    )
+    parser.add_argument(
+        '--skip_imgs',
+        help='Не скачивать фото',
+        type=bool,
+        default=False
+    )
+    parser.add_argument(
+        '--skip_txt',
+        help='не скачивать книги',
+        type=bool,
+        default=False
+    )
+    parser.add_argument(
+        '--json_path',
+        help='Путь к файлу с описанием книг',
+        type=str,
+        default=os.getcwd()
+    )
+    args = parser.parse_args()
+    if not args.skip_txt:
+        Path(os.path.join(args.dest_folder, BOOKS_DIR).mkdir(parents=True, exist_ok=True))
+    if not args.skip_imgs:
+        Path(os.path.join(args.dest_folder, IMAGES_DIR).mkdir(parents=True, exist_ok=True))
+
+    books_urls = get_books_urls_from_collection(args)
     books_info = []
     for book_url in books_urls:
         try:
             raw_html_page = get_book_page_by_url(book_url)
             book_details = parse_book_details(book_url, raw_html_page)
-            book_path = download_book(book_details)
-            image_src = download_image(book_details['image_url'])
+            if not args.skip_txt:
+                book_path = download_book(book_details)
+            if not args.skip_imgs:
+                image_src = download_image(book_details['image_url'])
             books_info.append(
                 get_readable_book_info(
                     book_details, 
@@ -149,7 +163,8 @@ def main():
             print(f'{book_url} invalid')
 
     books_info_json = json.dumps(books_info, ensure_ascii=False)
-    with open('books_info.json', 'w') as f:
+    json_path = os.path.join(args.json_path, 'books_info.json')
+    with open(json_path, 'w') as f:
         f.write(books_info_json)
 
 
