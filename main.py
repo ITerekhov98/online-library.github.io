@@ -1,16 +1,18 @@
 import argparse
-import os
 import json
+import os
 from pathlib import Path
 from urllib.parse import urlparse, urljoin
 
 import requests
 from requests import HTTPError, ConnectionError
-from retry import retry
-from pathvalidate import sanitize_filename
 from bs4 import BeautifulSoup
+from pathvalidate import sanitize_filename
+from retry import retry
 
-from parse_tululu_category import get_books_urls_from_collection, check_for_redirect
+from parse_tululu_category import   \
+    get_books_urls_from_collection, \
+    check_for_redirect
 
 
 BOOKS_DIR = 'books'
@@ -27,7 +29,10 @@ def download_book(book_details, folder=BOOKS_DIR):
     response.raise_for_status()
     check_for_redirect(response)
 
-    book_name = f"{book_details['id']}. {sanitize_filename(book_details['title'])}.txt"
+    book_name = '{}. {}.txt'.format(
+        book_details['id'],
+        sanitize_filename(book_details['title'])
+    )
     file_path = os.path.join(folder, book_name)
     with open(file_path, 'w') as file:
         file.write(response.text)
@@ -61,6 +66,7 @@ def get_book_page_by_id(book_id):
     response = requests.get(url)
     response.raise_for_status()
     check_for_redirect(response)
+
     return url, response.text
 
 
@@ -84,7 +90,7 @@ def parse_book_details(url, raw_html_page):
 
     parsed_url = urlparse(url)
     book_id = parsed_url.path[2:-1]
-    
+
     book_details = {
         'id': book_id,
         'title': title.strip(),
@@ -104,13 +110,13 @@ def main():
         '--start_page',
         help='Начальная страница',
         type=int,
-        default = 1,
+        default=1,
     )
     parser.add_argument(
         '--end_page',
         help='Конечная страница',
         type=int,
-        default = float('inf'),
+        default=float('inf'),
     )
     parser.add_argument(
         '--dest_folder',
@@ -138,9 +144,11 @@ def main():
     )
     args = parser.parse_args()
     if not args.skip_txt:
-        Path(os.path.join(args.dest_folder, BOOKS_DIR).mkdir(parents=True, exist_ok=True))
+        books_absolute_dir = os.path.join(args.dest_folder, BOOKS_DIR)
+        Path(books_absolute_dir.mkdir(parents=True, exist_ok=True))
     if not args.skip_imgs:
-        Path(os.path.join(args.dest_folder, IMAGES_DIR).mkdir(parents=True, exist_ok=True))
+        images_absolute_dir = os.path.join(args.dest_folder, IMAGES_DIR)
+        Path(images_absolute_dir.mkdir(parents=True, exist_ok=True))
 
     books_urls = get_books_urls_from_collection(args)
     books_info = []
@@ -154,9 +162,9 @@ def main():
                 image_src = download_image(book_details['image_url'])
             books_info.append(
                 get_readable_book_info(
-                    book_details, 
+                    book_details,
                     book_path,
-                    image_src
+                    image_src,
                 )
             )
         except HTTPError:

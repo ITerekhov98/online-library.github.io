@@ -1,15 +1,14 @@
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urljoin
+
 import requests
-from bs4 import BeautifulSoup
-
-
 from requests import HTTPError, ConnectionError
+from bs4 import BeautifulSoup
+from retry import retry
 
 
 def check_for_redirect(response):
     if response.history:
         raise HTTPError
-
 
 
 def parse_books_collection(raw_html_page):
@@ -24,6 +23,7 @@ def parse_books_collection(raw_html_page):
     return books_urls
 
 
+@retry(ConnectionError, delay=1, backoff=2, max_delay=128)
 def get_books_urls_from_page(collection_url):
     response = requests.get(collection_url)
     response.raise_for_status
@@ -43,4 +43,3 @@ def get_books_urls_from_collection(args):
         except HTTPError:
             return books_urls
     return books_urls
-
