@@ -118,12 +118,19 @@ def main():
         description='Загрузка книг из онлайн-библиотеки tululu.org'
     )
     parser.add_argument(
-        'books_count',
-        help='Укажите количество книг',
-        type=int
+        '--start_page',
+        help='Начальная страница',
+        type=int,
+        default = 1,
     )
-    args = parser.parse_args()
-    books_urls = get_books_urls_from_collection(args.books_count)
+    parser.add_argument(
+        '--end_page',
+        help='Конечная страница',
+        type=int,
+        default = float('inf'),
+    )
+    loading_pages = parser.parse_args()
+    books_urls = get_books_urls_from_collection(loading_pages)
     books_info = []
     for book_url in books_urls:
         try:

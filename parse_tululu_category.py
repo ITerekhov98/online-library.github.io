@@ -33,17 +33,14 @@ def get_books_urls_from_page(collection_url):
     return books_urls
 
 
-def get_books_urls_from_collection(books_count):
+def get_books_urls_from_collection(loading_pages):
     base_collection_url = 'https://tululu.org/l55/'
     books_urls = []
-    current_page = 1
-    while True:
-        if len(books_urls) >= books_count:
-            books_urls = books_urls[:books_count]
-            return books_urls
-
-        collection_url = urljoin(base_collection_url, str(current_page))
+    for page in range(loading_pages.start_page, loading_pages.end_page):
+        collection_url = urljoin(base_collection_url, str(page))
         try:
             books_urls.extend(get_books_urls_from_page(collection_url))
         except HTTPError:
             return books_urls
+    return books_urls
+
