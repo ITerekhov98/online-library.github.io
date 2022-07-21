@@ -121,7 +121,6 @@ def main():
     parser.add_argument(
         '--dest_folder',
         help='Каталог с результатами парсинга',
-        type=str,
         default=os.getcwd(),
     )
     parser.add_argument(
@@ -139,16 +138,15 @@ def main():
     parser.add_argument(
         '--json_path',
         help='Путь к файлу с описанием книг',
-        type=str,
         default=os.getcwd()
     )
     args = parser.parse_args()
     if not args.skip_txt:
         books_absolute_dir = os.path.join(args.dest_folder, BOOKS_DIR)
-        Path(books_absolute_dir.mkdir(parents=True, exist_ok=True))
+        Path(books_absolute_dir).mkdir(parents=True, exist_ok=True)
     if not args.skip_imgs:
         images_absolute_dir = os.path.join(args.dest_folder, IMAGES_DIR)
-        Path(images_absolute_dir.mkdir(parents=True, exist_ok=True))
+        Path(images_absolute_dir).mkdir(parents=True, exist_ok=True)
 
     books_urls = get_books_urls_from_collection(args)
     books_info = []
