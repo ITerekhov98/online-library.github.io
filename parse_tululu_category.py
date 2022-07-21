@@ -1,3 +1,4 @@
+import sys
 from urllib.parse import urljoin
 
 import requests
@@ -41,5 +42,5 @@ def get_books_urls_from_collection(args):
         try:
             books_urls.extend(get_books_urls_from_page(collection_url))
         except HTTPError:
-            return books_urls
+            sys.stdout.write(f"Страница под номером {page} невалидна, или отсутствует\r\n")
     return books_urls
