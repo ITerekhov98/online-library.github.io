@@ -29,8 +29,8 @@ class Book:
     genres: list
     comments:list
 
-    def get_readable_book_info(self, book_path, image_src):
-        book_info = {
+    def get_readable_book_details(self, book_path, image_src):
+        book_details = {
             'title': self.title,
             'author': self.author,
             'image_src': image_src,
@@ -38,10 +38,10 @@ class Book:
             'genres': self.genres,
             'comments': self.comments
         }
-        return book_info
+        return book_details
 
 @retry(ConnectionError, delay=1, backoff=2, max_delay=128)
-def download_book(book_details, folder=BOOKS_DIR):
+def download_book(book_details: Book, folder=BOOKS_DIR):
     url = 'https://tululu.org/txt.php'
     params = {
         'id': book_details.id
@@ -162,7 +162,7 @@ def main():
         Path(images_absolute_dir).mkdir(parents=True, exist_ok=True)
 
     books_urls = get_books_urls_from_collection(args)
-    books_info = []
+    books_description = []
     for book_url in books_urls:
         try:
             raw_html_page = get_book_page_by_url(book_url)
@@ -171,8 +171,8 @@ def main():
                 book_path = download_book(book_details)
             if not args.skip_imgs:
                 image_src = download_image(book_details.image_url)
-            books_info.append(
-                book_details.get_readable_book_info(
+            books_description.append(
+                book_details.get_readable_book_details(
                     book_path,
                     image_src,
                 )
@@ -180,10 +180,10 @@ def main():
         except HTTPError:
             sys.stdout.write(f'ссылка {book_url} невалидна\r\n')
 
-    books_info_json = json.dumps(books_info, ensure_ascii=False)
-    json_path = os.path.join(args.json_path, 'books_info.json')
+    books_description_json = json.dumps(books_description, ensure_ascii=False)
+    json_path = os.path.join(args.json_path, 'books_description.json')
     with open(json_path, 'w') as f:
-        f.write(books_info_json)
+        f.write(books_description_json)
 
 
 if __name__ == '__main__':
