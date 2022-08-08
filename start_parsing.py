@@ -57,7 +57,7 @@ def download_book(book_details: Book, folder=BOOKS_DIR):
     file_path = os.path.join(folder, book_name)
     with open(file_path, 'w') as file:
         file.write(response.text)
-    return file_path
+    return quote(file_path)
 
 
 @retry(ConnectionError, delay=1, backoff=2, max_delay=128)
