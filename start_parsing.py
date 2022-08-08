@@ -4,7 +4,7 @@ import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse, urljoin, quote
 
 import requests
 from requests import HTTPError, ConnectionError
@@ -70,7 +70,7 @@ def download_image(image_url, folder=IMAGES_DIR):
     image_path = os.path.join(folder, image_name)
     with open(image_path, 'wb') as file:
         file.write(response.content)
-    return image_path
+    return quote(image_path)
 
 
 @retry(ConnectionError, delay=1, backoff=2, max_delay=128)
