@@ -5,8 +5,9 @@ from livereload import Server
 from more_itertools import chunked
 from math import ceil
 from functools import partial
-BOOKS_COUNT_PER_PAGE = 20
 
+
+BOOKS_COUNT_PER_PAGE = 20
 
 def on_reload(env):
     template = env.get_template('template.html')
@@ -36,6 +37,7 @@ def main():
     server = Server()
     server.watch('template.html', partial(on_reload, env))    
     server.serve(root='.', default_filename='pages/index1.html')
+
 
 if __name__ == '__main__':
     main()
