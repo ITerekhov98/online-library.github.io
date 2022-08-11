@@ -12,7 +12,7 @@ BOOKS_COUNT_PER_PAGE = 20
 def on_reload(env):
     template = env.get_template('template.html')
     with open('books_description.json', 'r') as f:
-        books_description = json.loads(f.read())
+        books_description = json.load(f)
 
     number_of_pages = ceil(len(books_description) / BOOKS_COUNT_PER_PAGE)
     for index, books_batch in enumerate(chunked(books_description, BOOKS_COUNT_PER_PAGE), start=1):
